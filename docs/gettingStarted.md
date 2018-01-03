@@ -423,7 +423,7 @@ handleRequest: request for: socket
 
 ### Gem Server Transaction Management
 
-####Basic Gem Server Transaction Support
+#### Basic Gem Server Transaction Support
 The current implementation supports [manual transaction mode](#manual-transaction-mode) when running a *gem server* from a script using the `scriptStartServiceOn:` method.
 
 For [interactive debugging](#interactive-debugging) using the `interactiveStartServiceOn:transactionMode:` method: 
@@ -650,7 +650,7 @@ executeStartGemCommand: portOrResourceName
   self performOnServer: commandLine
 ```
 
-###Gem Server Control from Smalltalk
+### Gem Server Control from Smalltalk
 *Gem servers* can be started, stopped and restarted from Smalltalk:
 
 ```Smalltalk
@@ -659,7 +659,7 @@ executeStartGemCommand: portOrResourceName
 (GemServer gemServerNamed: 'Seaside') restartGems.
 ```
 
-###Gem Server Bash scripts
+### Gem Server Bash scripts
 The *gem server* bash scripts are designed to control a single *gem server* operating system process, one process for each port in the port list.
 For *gem servers* that are not port-based, resource names are used to differentiate between *gem server* instances.
 The bash scripts are aimed at making it possible to start and stop individual gem servers from a process management tool like [DaemonTools][5] or [Monit][6].
@@ -802,7 +802,7 @@ If you are experiencing problems in production and are having trouble characteri
 By default the [*gem server* exception handlers](#gem-server-exception-set) will handle a **Halt** by saving a debug continuation to the [object log](#object-log) and then `resuming` the **Halt** exception, so execution continues.
 Naturally there is a cost to saving continuations, but continuation-based debugging is superior to print statment debugging.
 
-###Interactive Debugging
+### Interactive Debugging
 
 If you have a reproducable test case or you need to do some hands on development of your server code, you would like to be able run a *gem server* in your favorite interactive development environment.
 However, there are several obstacles that need to be overcome when trying to do interactive development with a *gem server* that has been designed to run in a headless [Topaz][2] session:

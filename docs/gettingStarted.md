@@ -1,6 +1,6 @@
 # Getting started with Gem Servers
 
-##Table of Contents
+## Table of Contents
 - [What is a Gem Server](#what-is-a-gem-server)
   - [Topaz](#topaz)
     - [Topaz Execution Environment](#topaz-execution-environment)
@@ -39,11 +39,11 @@
 
 ---
 
-##What is a Gem Server
+## What is a Gem Server
 
 A *gem server* is a [Topaz session](#gemstone-session) that executes an *application-specific service loop*.
 
-###Topaz
+### Topaz
 
 The [Topaz][2] execution model is very different from the typical Smalltalk execution model:
 
@@ -61,13 +61,13 @@ Control returns to the [Topaz][2] console when the Smalltalk code itself returns
 When control returns to the console, Smalltalk execution is halted until another [Topaz][2] command is executed.
 If the last `run` section has been encountered the [Topaz][2] process exits.
 
-####Topaz Execution Environment
+#### Topaz Execution Environment
 
 For *gem server* code to be run in [Topaz][2] you need to do two things:
   1. Ensure that the main Smalltalk process blocks and does not return.
   2. Ensure that all exceptions are handled, including exceptions signalled in processes that have been forked from the main Smalltalk process.
 
-#####Block Main Process
+##### Block Main Process
 In essence this entails structuring your *application-specific service loop* to look something like the following:
 
 ```
@@ -83,7 +83,7 @@ run
 The main Smalltalk process is blocked by the infinite `whileTrue:` loop.
 The exception handler is protecting the `"application service loop code"`, so we shouldn't have an *unhandled exception*, as long as the *exceptionSet* is covering the [proper set of exceptions](#exceptions-to-handle-in-topaz).
 
-#####Exception Handler protecting forked blocks
+##### Exception Handler protecting forked blocks
 If we are forking blocks, each of the forked processes must have an exception handler near the top of the stack to guard against *unhandled exceptions* that looks like the following:
 
 ```Smalltalk
@@ -93,14 +93,14 @@ If we are forking blocks, each of the forked processes must have an exception ha
     do: [:ex | "handle the exception and continue processing" ] ] fork
 ```
 
-#####Exceptions to Handle in Topaz
+##### Exceptions to Handle in Topaz
 In a [Topaz][2] process, exception handlers should be defined to handle the following exceptions:
   - **AlmostOutOfMemory** - Notication signalled when a percent [temporary object space](#temporary-object-space) threshold is exceeded. The [Topaz][2] process will be terminated if [temporary object space](#temporary-object-space) is completely consumed. A typical handler will do a commit to cause persistent objects to be flushed from [temporary object space](#temporary-object-space) to disk. If a significant amount of [temporary object space](#temporary-object-space) is being consumed on the stack, then logging a stack trace and unwinding the stack may be called for. 
   - **AlmostOutOfStack** - Notification signaled when the size of the current execution stack is about to exceed the [max execution stack depth](#gem_max_smalltalk_stack_depth). Again, the [Topaz][2] process will be terminated if the notification is not heeded. A typical handler will log a stack trace and unwind the stack.
   - **Error** - Most **Error** exceptions are going to be handled by error handlers in the application code itself, but it is prudent to provide a backstop exception handler for unanticipated error conditions. The typical error handler should log the stack trace and unwind the stack.
   - **TransactionBacklog** - If signalling is enabled, a typical handler will do an abort. If signalling is not enabled and/or an abort is not performed in a timely manner, then the session will be forcibly terminated.
 
-####Topaz Transaction Modes
+#### Topaz Transaction Modes
 
 A [Topaz session](#gemstone-session) may run in one of two transaction modes:
   - [automatic transaction mode](#automatic-transaction-mode)
@@ -118,7 +118,7 @@ See the [Gem Server Transaction Management](#gem-server-transaction-management) 
 
 ---
 
-##GemServer class
+## GemServer class
 As the preceding sections have highlighted, there are several issues in the area of *server exception handling* and *server transaction management* that are unique to the GemStone Smalltalk environment.
 The **GemServer** class provides a concise framework for standardized:
   - [service loop definition](#gem-server-service-loop)
@@ -130,7 +130,7 @@ The **GemServer** class provides a concise framework for standardized:
 
 ---
 
-###Gem Server Service Loop
+### Gem Server Service Loop
 A *gem server* is associated with one or more *port or resource names*.
 
 One [Topaz session](#gemstone-session) is launched for each of the *port or resource names* associated with a *gem server*.
@@ -195,7 +195,7 @@ basicServerOn: portOrResourceName
 
 ---
 
-###Gem Server Exception Handling
+### Gem Server Exception Handling
 There are a number of `gemServer:*` methods. 
 The `gemServer:exceptionSet:beforeUnwind:ensure`: method is the foundation of them all. 
 It implements the basic exception handling logic for the GemServer class:
@@ -244,7 +244,7 @@ There are several variants of the `GemServer>>gemServer:exceptionSet:beforeUnwin
   - gemServer:exceptionSet:beforeUnwind:ensure:
   - gemServer:exceptionSet:ensure:
 
-####Gem Server Exception Set
+#### Gem Server Exception Set
 Default exception handling has been defined for the following exceptions:
   - **Error**
   - **Break**
@@ -273,7 +273,7 @@ One may define an `exceptionSet`:
 
 **Note**: *The list of default exceptions discussed in this section are slightly different for [GemStone 2.4.x][8].*
 
-####Gem Server Exception Handlers
+#### Gem Server Exception Handlers
 The *gem server* uses [double dispatching][9] to invoke exception-specific handling behavior.
 The primary method `exceptionHandlingForGemServer:` is sent by the `GemServer>>handleGemServerException:` method:
 
@@ -331,7 +331,7 @@ As in the case of handling an **Error** the [exception is logged](#gem-server-ex
 
 If your *gem server* needs custom handling for an exception, you can add new `gemServerHandle*` methods or override existing `gemServerHandle*` methods.
 
-####Gem Server `beforeUnwindBlock`
+#### Gem Server `beforeUnwindBlock`
 The `beforeUnwindBlock` gives you a chance to perform application specific operations before the stack is unwound.
 For example, a web server may want to return a 4xx or 5xx HTTP response in the event of an error:
 
@@ -342,7 +342,7 @@ handleRequest: request for: socket
     beforeUnwind: [ :ex | ^ self writeServerError: ex to: socket ]
 ```
 
-####Gem Server Exception Logging
+#### Gem Server Exception Logging
 When an exception is handled, the stack is written to the gem log and a continuation for the stack is saved to the [object log](#object-log) by the `logStack:titled:inTransactionDo:` method:
 
 ```Smalltalk
@@ -407,7 +407,7 @@ serverError: exception titled: title inTransactionDo: inTransactionBlock
     inTransactionDo: inTransactionBlock.
 ```
 
-####Gem Server `ensureBlock`
+#### Gem Server `ensureBlock`
 The `ensureBlock` gives you a chance to make sure that any resources used by the application within the scope of the `gemServer:*` call are cleaned up.
 For example, a web server may want to close sockets when processing is finished:
 
@@ -421,7 +421,7 @@ handleRequest: request for: socket
 
 ---
 
-###Gem Server Transaction Management
+### Gem Server Transaction Management
 
 ####Basic Gem Server Transaction Support
 The current implementation supports [manual transaction mode](#manual-transaction-mode) when running a *gem server* from a script using the `scriptStartServiceOn:` method.
@@ -441,7 +441,7 @@ The **GemServer** class provides three methods for performing transactions:
 
 All three methods perform transactions under the protection of the `transactionMutex`.
 
-#####doBasicTransaction:
+##### doBasicTransaction:
 The `doBasicTransaction:` ensures that the session is in transaction before the `aBlock is invoked and then performs a commit:
 
 ```Smalltalk
@@ -473,7 +473,7 @@ Otherwise it is not possible to guarantee the integrity of your persistent data.
 
 The  `doBasicTransaction:` method does not handle commit failures, so for everyday transactions, you should use either [`doTransaction:onConflict:`](#dotransactiononconflict) or [`doTransaction:`](#dotransaction), depending upon whether or not you want to handle [commit conflicts](#transaction-conflict) explicitly or not.
 
-#####doTransaction:onConflict:
+##### doTransaction:onConflict:
 The `doTransaction:onConflict:` method allows you to specify action to be taken in the event of a [commit conflict](#transaction-conflict):
 
 ```Smalltalk
@@ -492,7 +492,7 @@ doTransaction: aBlock onConflict: conflictBlock
 The `conflictBlock` is passed the [conflict dictionary](#transaction-conflict-dictionary) as an argument.
 Typically the `conflictBlock` is used to stash the [conflict dictionary](#transaction-conflict-dictionary) in the [object log](#object-log).
 
-#####doTransaction:
+##### doTransaction:
 If an error is the appropriate response to a [commit conflict](#transaction-conflict), then the `doTransaction` method should be used: 
 
 ```Smalltalk
@@ -512,7 +512,7 @@ doTransaction: aBlock
 
 This method dumps the  [conflict dictionary](#transaction-conflict-dictionary) to the [object log](#object-log) and signals an error.
 
-####Practical Gem Server Transaction Support
+#### Practical Gem Server Transaction Support
 There are a number of `gemServerTransaction:*` methods.
 The `gemServerTransaction:exceptionSet:beforeUnwind:ensure:onConflict:` is the foundation of them all.
 It wraps a transaction around the [`gemServer:exceptionSet:beforeUnwind:ensure:`](#gem-server-exception-handling) call:
@@ -563,7 +563,7 @@ In general there are two broad categories of tasks performed by a *gem server*:
   - Quick hitting, compute intensive [request/response tasks](#requestresponse-gem-server-tasks).
   - Long running, wait intensive [I/O tasks](#io-gem-server-tasks).
 
-#####Request/Response Gem Server Tasks
+##### Request/Response Gem Server Tasks
 In a quick hitting, request/response *gem server* you should run the request handling logic in a forked process and wrap it with a `gemServerTransaction:*` call like the following:
 
 ```Smalltalk
@@ -581,7 +581,7 @@ By following this pattern, you will be able to write the `processRequest:for:` l
 
 This is basically the transaction model used by [GsDevKit/Seaside31][4].
 
-#####I/O Gem Server Tasks
+##### I/O Gem Server Tasks
 In a long running, wait intensive *gem server*, you will run the task handling logic in a forked process, as before, but you will want to exclude the wait intensive tasks, from the *transaction critical block*, like the following:
 
 ```Smalltalk
@@ -596,14 +596,14 @@ performTask:
 In this example we do the http get *outside of transaction*, which means that a large number of tasks can be waiting for an http response, concurrently.
 Only when a response becomes available, does the *transaction mutex* and then the processing required while *in transaction* should be very short.
 
-####Important Transaction Considerations
+#### Important Transaction Considerations
 
 It is important that one avoids modifying persistent objects while *outside of transaction*.
 It is permissable to read persistent objects but any modifications to persistent objects made while outside of transaction will be lost when the [abort](#abort-transaction) or [begin](#begin-transaction) transaction is called by the `gemServerTransaction:` method.
 
 ---
 
-##Gem Server Control
+## Gem Server Control
 
 When you register a *gem server*, you specify a list of ports associated with the *gem server*:
 
@@ -666,7 +666,7 @@ The bash scripts are aimed at making it possible to start and stop individual ge
 
 The scripts are also called from within Smalltalk using `System class>>performOnServer:`.
 
-####Gem Server start script
+#### Gem Server start script
 The [*gem server* start script][14] takes three arguments:
   1. gem server name
   2. port number or resource name
@@ -713,7 +713,7 @@ scriptServicePrologOn: portOrResourceName
 
 which among other things records the `gem process id` in a file, so that the [gem server stop script](#gem-server-stop-script) knows which operating system process to kill.
 
-####Gem Server stop script
+#### Gem Server stop script
 The [*gem server* stop script][15] takes two arguments:
   1. gem server name
   2. port number or resource name
@@ -726,8 +726,8 @@ The script gets the `gem process id` from the `pid` file and kills.
 
 ---
 
-##Gem Server Debugging
-###Object Log Debugging
+## Gem Server Debugging
+### Object Log Debugging
 In normal operation, a *gem server* is running as a headless [Topaz][2] process.
 When an error occurs, [a continuation is saved to the object log](#gem-server-exception-logging):
 
@@ -848,7 +848,7 @@ interactiveStartServiceOn: portOrResourceName transactionMode: mode
     startServerOn: portOrResourceName  "does not return"
 ```
 
-####Interactive Debugging Example
+#### Interactive Debugging Example
 For this example we will be using the **GemServerRemoteServerSerialProcessingExample** for the *gem server* and the **GemServerRemoteClientSerialProcessingExample** as the client.  
 
 The **GemServerRemoteServerSerialProcessingExample** instance takes tasks (**GemServerRemoteTaskSerialProcessingExample** class) off of a queue and executes the task in a separate Smalltalk process. 
@@ -880,7 +880,7 @@ When the method `submitAndWaitFor:gemServer:` is sent to a **GemServerRemoteServ
 6. `inProcess` queue
 7. `task` queue
 
-#####Interactive Debugging Step by Step
+##### Interactive Debugging Step by Step
 **Note:** *A commit should be performed after each **client session** doit.
 If you are not using auto commit mode, then an explicit commit is needed.*
  
@@ -947,9 +947,9 @@ If you are not using auto commit mode, then an explicit commit is needed.*
 ---
 ---
 
-##Glossary
+## Glossary
 
-###Abort Transaction
+### Abort Transaction
 **Excerpted from [Programming Guide for GemStone/S 64 Bit][3], Section 8.2**
 
 ---
@@ -966,7 +966,7 @@ session.*
 
 ---
 
-###Automatic transaction mode
+### Automatic transaction mode
 **Excerpted from [Programming Guide for GemStone/S 64 Bit][3], Section 8.1**
 
 ---
@@ -987,7 +987,7 @@ causing a strain on system resources.*
 
 ---
 
-###Begin Transaction
+### Begin Transaction
 **Excerpted from [Programming Guide for GemStone/S 64 Bit][3], Section 8.2**
 
 ---
@@ -1001,7 +1001,7 @@ either explicitly begin a new one or change transaction modes.*
 
 ---
 
-###Commit Record Backlog
+### Commit Record Backlog
 **Excerpted from [System Administration Guide for GemStone/S 64 Bit][7], Section 4.9**
 
 ---
@@ -1016,7 +1016,7 @@ transaction enable receipt of the signal TransactionBacklog, and handle it appro
 
 ---
 
-###Commit Transaction
+### Commit Transaction
 **Excerpted from [Programming Guide for GemStone/S 64 Bit][3], Section 8.2**
 
 ---
@@ -1029,7 +1029,7 @@ other users in an up-to-date view of the repository.*
 
 ---
 
-###GemBuilder for C
+### GemBuilder for C
 
 **Excerpted from [GemBuilder for C
 for GemStone/S 64 Bit][3], Section 1**
@@ -1053,7 +1053,7 @@ Smalltalk model).*
 
 ---
 
-###GemStone Session
+### GemStone Session
 **Excerpted from [Topaz Programming Environment for GemStone/S 64 Bit][2], Section 1.2**
 
 ---
@@ -1069,7 +1069,7 @@ Smalltalk model).*
 
 ---
 
-###GemStone Transaction
+### GemStone Transaction
 **Excerpted from [Programming Guide for GemStone/S 64 Bit][3], Section 8.1**
 
 ---
@@ -1099,7 +1099,7 @@ committed by other users become visible to you...*
 
 ---
 
-###GEM_MAX_SMALLTALK_STACK_DEPTH
+### GEM_MAX_SMALLTALK_STACK_DEPTH
 **Excerpted from [System Administration Guide for GemStone/S 64 Bit][7], Appendix A.3**
 
 ---
@@ -1118,7 +1118,7 @@ the error RT_ERR_STACK_LIMIT.*
 
 ---
 
-###Manual Transaction Mode
+### Manual Transaction Mode
 **Excerpted from [Programming Guide for GemStone/S 64 Bit][3], Section 8.1**
 
 ---
@@ -1143,13 +1143,13 @@ either explicitly begin a new one or change transaction modes.*
 
 ---
 
-###Maintenance VM
+### Maintenance VM
 The *maintenance vm* is a gem server that must be run while serving Seaside requests.
 The main job of the *maintenance vm* is to reap expired session state.
 The *maintenance vm* also runs an hourly *mark For collect*.
 For large Seaside installations (a stone where the entire GemStone repository cannot fit into the Shared Page Cache), the *mark for collect* should be moved into a separate gem server and run during off-peak hours.
 
-###Object Log
+### Object Log
 The *object log* is a persistent, reduced conflict collection of **ObjectLogEntry** instances.
 An **ObjectLogEntry** records the following information:
   - *pid* of the gem in which the instance is created
@@ -1162,7 +1162,7 @@ An **ObjectLogEntry** records the following information:
 One can add arbitrary labeled  objects to the *object log*, so it can function as a very sophisticated form of *print statement debugging*.
 
 
-###Temporary Object Space
+### Temporary Object Space
 **Excerpted from [Programming Guide for GemStone/S 64 Bit][3], Section 14.3**
 
 ---
@@ -1186,7 +1186,7 @@ and terminate.*
 
 ---
 
-###Transaction Conflict
+### Transaction Conflict
 **Excerpted from [Programming Guide for GemStone/S 64 Bit][3], Section 8.2**
 
 ---
@@ -1209,7 +1209,7 @@ problem.*
 
 ---
 
-###Transaction Conflict Dictionary
+### Transaction Conflict Dictionary
 **From the comment of the method System class>>transactionConflicts**
 
 ---
